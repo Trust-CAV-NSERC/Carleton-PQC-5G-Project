@@ -2,6 +2,9 @@
 ## Author
 Georges Ankenmann - Carleton University
 
+## Background
+Rainbow keys are large (at least 60 KB, while Dilithium only 1.3 KB). But if we don’t update key frequently over the air we can embed the Rainbow secret or public key into car, as Rainbow has small signatures (66 bytes, while Dilithium is 2.4 KB), considering SCMS(Security Credential Management System) or Smart City IoT(Internet of things) message length might be only a few hundred bytes. We test both quantum resistant Saber and Kyber algorithms on L5 (AeroXO) Trusted Connected and Autonomous Vehicles track over Ericsson ENCQOR 5G (Evolution of Networked Services through a Corridor in Québec and Ontario for Research and Innovation).
+
 ## Purpose
 The purpose of this project is to experiment with post quantum encryption algorithms and measure the latency of various types of deployment. 
 
