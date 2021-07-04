@@ -3,18 +3,20 @@ import requests
 import json
 import oqs
 import sys
+import os
 import datetime
 from Crypto.Cipher import AES
 from pprint import pprint
+import uuid
 sigalg = "Dilithium5"
 kemalg = "Saber-KEM"
+GPS_ID = os.environ["GPS-ID"]
 list_of_servers = [
-    {"server":"server","port":"5000","name":"local1"},
-    {"server":"server2","port":"5000","name":"local2"},
-    {"server":"209.104.103.66","port":"443","name":"ott-1-edge-wan"}
+    {"server":"server","port":"5000","name":"local1"}#,
+    #{"server":"server1","port":"5000","name":"local2"},
+    #{"server":"209.104.103.66","port":"25115","name":"ott-1-edge-wan"},
+    #{"server":"172.21.30.10","port":"5000","name":"quark"}
     ]
-server_url = "172.21.30.10"
-server_url = "server"
 kems = oqs.get_enabled_KEM_mechanisms()
 #print("Enabled KEM mechanisms:")
 #pprint(kems, compact="True")
@@ -27,14 +29,14 @@ def login(server,port):
     token = requests.post(AUTH_SERVER_URL, json = user)
     return token.text
 
-def generateSignerKey():
+def generateSignerKey(sigalg):
     with oqs.Signature(sigalg) as signer:
         print (signer.details)
         signer_public_key = signer.generate_keypair()
         secret_key = signer.export_secret_key()
     return base64.b64encode(signer_public_key),base64.b64encode(secret_key)
 
-def generateKEMKeys():
+def generateKEMKeys(kemalg):
     with oqs.KeyEncapsulation(kemalg) as kem:
         print (kem.details)
         signer_public_key = kem.generate_keypair()
@@ -162,8 +164,8 @@ def test():
 def avg(lst):
     return sum(lst) / len(lst)
 #test()
-signer_keys = generateSignerKey()
-kem_keys = generateKEMKeys()
+signer_keys = generateSignerKey(sigalg)
+kem_keys = generateKEMKeys(kemalg)
 #diff_cipher = testCipherText('server','5000')
 #valid, diff_clear = testClearTextMessage('server','5000')
 
@@ -172,7 +174,7 @@ kem_keys = generateKEMKeys()
 
 ## Test server reachability
 #print (testServerReachability('server','5000'))
-
+results = {}
 for server in list_of_servers:
     print ("testing "+str(server))
     status = testServerReachability(server["server"],server["port"])
@@ -182,19 +184,34 @@ for server in list_of_servers:
         print ("invalid server")
         sys.exit(1)
 
-"""
-diff_cipher_ary = []
-diff_ct_ary = []
-amount_of_tests = 50
-for i in range(0,amount_of_tests):
-    diff_cipher = testCipherText('server','5000')
-    valid, diff_clear = testClearTextMessage('server','5000')
-#    valid, diff = testClearTextMessage()
-    if valid:
-#        #print ("Valid!")
-        diff_ct_ary.append(diff_clear)
-    diff_cipher_ary.append(diff_cipher)
-print ("Average clear text delay over "+str(amount_of_tests)+" tests: "+str(round(avg(diff_ct_ary),3))+"ms")
-print ("Average cipher text delay over "+str(amount_of_tests)+" tests: "+str(round(avg(diff_cipher_ary),3))+"ms")
-#testAsymTextMessage()
-"""
+for server in list_of_servers:
+    results[server["name"]]= {"server":server}
+    print ("running PQC Tests against "+str(server))
+    srv = server["server"]
+    port = server["port"]
+    diff_cipher_ary = []
+    diff_ct_ary = []
+    amount_of_tests = 50
+    for i in range(0,amount_of_tests):
+        diff_cipher = testCipherText(srv,port)
+        valid, diff_clear = testClearTextMessage(srv,port)
+    #    valid, diff = testClearTextMessage()
+        if valid:
+    #        #print ("Valid!")
+            diff_ct_ary.append(diff_clear)
+        diff_cipher_ary.append(diff_cipher)
+    print ("Average clear text delay over "+str(amount_of_tests)+" tests: "+str(round(avg(diff_ct_ary),3))+"ms")
+    print ("Average cipher text delay over "+str(amount_of_tests)+" tests: "+str(round(avg(diff_cipher_ary),3))+"ms")
+    results[server["name"]]= {
+        "delay":[
+            {"clear text":str(round(avg(diff_ct_ary),3))},
+            {"cipher text":str(round(avg(diff_cipher_ary),3))}
+            ],
+        "server":server,
+        "GPS ID":GPS_ID,
+        "timestamp":str(datetime.datetime.utcnow())
+        }
+    
+    #testAsymTextMessage()
+
+print (json.dumps(results))

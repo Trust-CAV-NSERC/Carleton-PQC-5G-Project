@@ -26,13 +26,13 @@ users = [
 username_table = {u.username: u for u in users}
 userid_table = {u.id: u for u in users}
 
-def generateKEMKey():
+def generateKEMKey(kemalg):
     with oqs.KeyEncapsulation(kemalg) as signer:
         signer_public_key = signer.generate_keypair()
         secret_key = signer.export_secret_key()
     return base64.b64encode(signer_public_key),base64.b64encode(secret_key)
 
-def generateSignerKey():
+def generateSignerKey(sigalg):
     with oqs.Signature(sigalg) as signer:
         signer_public_key = signer.generate_keypair()
         secret_key = signer.export_secret_key()
@@ -51,8 +51,8 @@ app = Flask(__name__)
 app.debug = False
 app.config['SECRET_KEY'] = 'super-secret'
 jwt = JWT(app, authenticate, identity)
-signer_keys = generateSignerKey()
-kem_keys = generateKEMKey()
+signer_keys = generateSignerKey(sigalg)
+kem_keys = generateKEMKey(kemalg)
 
 @app.route('/server-signer-pubkey')
 @jwt_required()
