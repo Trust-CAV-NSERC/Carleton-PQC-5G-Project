@@ -2,11 +2,17 @@ import base64
 import requests
 import json
 import oqs
+import sys
 import datetime
 from Crypto.Cipher import AES
 from pprint import pprint
 sigalg = "Dilithium5"
 kemalg = "Saber-KEM"
+list_of_servers = [
+    {"server":"server","port":"5000","name":"local1"},
+    {"server":"server2","port":"5000","name":"local2"},
+    {"server":"209.104.103.66","port":"443","name":"ott-1-edge-wan"}
+    ]
 server_url = "172.21.30.10"
 server_url = "server"
 kems = oqs.get_enabled_KEM_mechanisms()
@@ -15,8 +21,8 @@ kems = oqs.get_enabled_KEM_mechanisms()
 sigs = oqs.get_enabled_sig_mechanisms()
 #print("Enabled signature mechanisms:")
 #pprint(sigs, compact="True")
-def login():
-    AUTH_SERVER_URL = "http://"+server_url+":5000/auth"
+def login(server,port):
+    AUTH_SERVER_URL = "http://"+server+":"+port+"/auth"
     user = {"username":"user1","password":"user1"}
     token = requests.post(AUTH_SERVER_URL, json = user)
     return token.text
@@ -34,27 +40,27 @@ def generateKEMKeys():
         signer_public_key = kem.generate_keypair()
         secret_key = kem.export_secret_key()
     return base64.b64encode(signer_public_key),base64.b64encode(secret_key)
-def getProtected(token):
+def getProtected(token,server,port):
     auth_token = "JWT "+str(token)
-    URL = "http://"+server_url+":5000/protected"
+    URL = "http://"+server+":"+port+"/protected"
     protected = requests.get(URL, headers={"Authorization":auth_token})
     return protected.text
 
-def getPubKey(token):
+def getPubKey(token,server,port):
     auth_token = "JWT "+str(token)
-    URL = "http://"+server_url+":5000/server-signer-pubkey"
+    URL = "http://"+server+":"+port+"/server-signer-pubkey"
     protected = requests.get(URL, headers={"Authorization":auth_token})
     return protected.text
 
-def getTestClearTextMessage(token):
+def getTestClearTextMessage(token,server,port):
     auth_token = "JWT "+str(token)
-    URL = "http://"+server_url+":5000/cleartexttestmessage"
+    URL = "http://"+server+":"+port+"/cleartexttestmessage"
     protected = requests.get(URL, headers={"Authorization":auth_token})
     return protected.text
 
-def getCipherText(token,pubkey):
+def getCipherText(token,pubkey,server,port):
     auth_token = "JWT "+str(token)
-    URL = "http://"+server_url+":5000/cipher_text"
+    URL = "http://"+server+":"+port+"/cipher_text"
     pubKey = {"pubkey":str(pubkey,"utf-8")}
     protected = requests.post(URL, headers={"Authorization":auth_token}, json=pubKey)
     return protected.text
@@ -80,21 +86,21 @@ def verifyMessage(message,signature,pubkey):
 
         return is_valid,diff.microseconds/1000
 
-def testClearTextMessage():
-    token = json.loads(login())
+def testClearTextMessage(server,port):
+    token = json.loads(login(server,port))
     token = token["access_token"]
-    pubkey = json.loads(getPubKey(token))["key"]
-    testMessage = json.loads(getTestClearTextMessage(token))
+    pubkey = json.loads(getPubKey(token,server,port))["key"]
+    testMessage = json.loads(getTestClearTextMessage(token,server,port))
     signed_message = testMessage["signed_message"]
     message = testMessage["message"]
     return verifyMessage(message,signed_message,pubkey)
 
-def testCipherText():
+def testCipherText(server,port):
     now = datetime.datetime.utcnow()
     keys = kem_keys
-    token = json.loads(login())
+    token = json.loads(login(server,port))
     token = token["access_token"]
-    ciphertext = getCipherText(token,keys[0])
+    ciphertext = getCipherText(token,keys[0],server,port)
     ciphertext = json.loads(ciphertext)
     client = oqs.KeyEncapsulation(kemalg,base64.b64decode(keys[1]))
     shared_secret_client = client.decap_secret(base64.b64decode(ciphertext["key"]))
@@ -105,6 +111,17 @@ def testCipherText():
     msg_time = datetime.datetime.utcfromtimestamp(float(decoded_message["time"]))
     diff = now - msg_time
     return diff.microseconds/1000
+def testServerReachability(server,port):
+    URL = "http://"+server+":"+port+"/status"
+    try:
+        status = requests.get(URL)
+        status = json.loads(status.text)
+        if status["status"] == "ok":
+            return True
+        else:
+            return False
+    except:
+        return False
 def test():
     #kemalg = "Kyber1024"
     client_keys = generateKEMKeys()
@@ -147,17 +164,31 @@ def avg(lst):
 #test()
 signer_keys = generateSignerKey()
 kem_keys = generateKEMKeys()
-diff_cipher = testCipherText()
-valid, diff_clear = testClearTextMessage()
+#diff_cipher = testCipherText('server','5000')
+#valid, diff_clear = testClearTextMessage('server','5000')
 
 #print ("Cipher Text Message Delay: "+ str(diff_cipher)+"ms. Algorithm "+kemalg)
 #print ("Clear Text Message Delay: "+str(diff_clear)+"ms. Algorithm "+sigalg)
+
+## Test server reachability
+#print (testServerReachability('server','5000'))
+
+for server in list_of_servers:
+    print ("testing "+str(server))
+    status = testServerReachability(server["server"],server["port"])
+    if status:
+        print ("valid server")
+    else:
+        print ("invalid server")
+        sys.exit(1)
+
+"""
 diff_cipher_ary = []
 diff_ct_ary = []
 amount_of_tests = 50
 for i in range(0,amount_of_tests):
-    diff_cipher = testCipherText()
-    valid, diff_clear = testClearTextMessage()
+    diff_cipher = testCipherText('server','5000')
+    valid, diff_clear = testClearTextMessage('server','5000')
 #    valid, diff = testClearTextMessage()
     if valid:
 #        #print ("Valid!")
@@ -166,3 +197,4 @@ for i in range(0,amount_of_tests):
 print ("Average clear text delay over "+str(amount_of_tests)+" tests: "+str(round(avg(diff_ct_ary),3))+"ms")
 print ("Average cipher text delay over "+str(amount_of_tests)+" tests: "+str(round(avg(diff_cipher_ary),3))+"ms")
 #testAsymTextMessage()
+"""

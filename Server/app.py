@@ -95,5 +95,9 @@ def generateCleartextTestMessage():
 def protected():
     return {"msg":"Valid JWT!"}
 
+@app.route('/status')
+def status():
+    return {"status":"ok"}
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0")
