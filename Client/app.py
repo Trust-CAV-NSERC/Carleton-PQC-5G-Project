@@ -9,20 +9,21 @@ from Crypto.Cipher import AES
 from pprint import pprint
 import uuid
 sigalg = "Dilithium5"
-kemalg = "Saber-KEM"
+#kemalg = "Saber-KEM"
+kemalg = "Kyber1024"
 GPS_ID = os.environ["GPS-ID"]
 list_of_servers = [
     {"server":"server","port":"5000","name":"local1"}#,
     #{"server":"server1","port":"5000","name":"local2"},
-    #{"server":"209.104.103.66","port":"25115","name":"ott-1-edge-wan"},
+    #{"server":"209.104.103.66","port":"25115","name":"ott-1-edge-wan"}
     #{"server":"172.21.30.10","port":"5000","name":"quark"}
     ]
 kems = oqs.get_enabled_KEM_mechanisms()
-#print("Enabled KEM mechanisms:")
-#pprint(kems, compact="True")
+print("Enabled KEM mechanisms:")
+pprint(kems, compact="True")
 sigs = oqs.get_enabled_sig_mechanisms()
-#print("Enabled signature mechanisms:")
-#pprint(sigs, compact="True")
+print("Enabled signature mechanisms:")
+pprint(sigs, compact="True")
 def login(server,port):
     AUTH_SERVER_URL = "http://"+server+":"+port+"/auth"
     user = {"username":"user1","password":"user1"}
@@ -166,6 +167,7 @@ def avg(lst):
 #test()
 signer_keys = generateSignerKey(sigalg)
 kem_keys = generateKEMKeys(kemalg)
+
 #diff_cipher = testCipherText('server','5000')
 #valid, diff_clear = testClearTextMessage('server','5000')
 

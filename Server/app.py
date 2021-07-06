@@ -8,8 +8,8 @@ import json
 from Crypto.Cipher import AES
 import hashlib
 sigalg = "Dilithium5"
-kemalg = "Saber-KEM"
-
+#kemalg = "Saber-KEM"
+kemalg = "Kyber1024"
 class User(object):
     def __init__(self, id, username, password):
         self.id = id
