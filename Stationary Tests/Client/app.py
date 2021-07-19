@@ -8,13 +8,14 @@ import datetime
 from Crypto.Cipher import AES
 from pprint import pprint
 import uuid
-sigalg = "Dilithium5"
+sigalg = "Rainbow-V-Classic"
 #kemalg = "Saber-KEM"
-kemalg = "Kyber1024"
+kemalg = "Kyber512"
 GPS_ID = os.environ["GPS-ID"]
 list_of_servers = [
-    {"server":"server","port":"5000","name":"local1"}#,
-    #{"server":"server1","port":"5000","name":"local2"},
+    {"server":"10.213.75.36","port":"5000","name":"Toronto Edge"},
+    {"server":"10.213.59.36","port":"5000","name":"Ottawa Edge"},
+    {"server":"172.21.30.10","port":"5000","name":"Georges Home"}
     #{"server":"209.104.103.66","port":"25115","name":"ott-1-edge-wan"}
     #{"server":"172.21.30.10","port":"5000","name":"quark"}
     ]
@@ -193,7 +194,7 @@ for server in list_of_servers:
     port = server["port"]
     diff_cipher_ary = []
     diff_ct_ary = []
-    amount_of_tests = 50
+    amount_of_tests = 3
     for i in range(0,amount_of_tests):
         diff_cipher = testCipherText(srv,port)
         valid, diff_clear = testClearTextMessage(srv,port)

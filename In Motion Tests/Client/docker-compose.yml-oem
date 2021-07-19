@@ -1,0 +1,63 @@
+version: '3'
+services:
+    client-dilithium2:
+        build: .
+        environment:
+            - SIG_ALG_NUM=0
+            - SERVER_PORT=500
+        networks:
+            docker1:
+    client-dilithium3:
+        build: .
+        environment:
+            - SIG_ALG_NUM=1
+            - SERVER_PORT=5001
+        networks:
+            docker1:
+    client-dilithium5:
+        build: .
+        environment:
+            - SIG_ALG_NUM=2
+            - SERVER_PORT=5002
+        networks:
+            docker1:
+    client-rainbow1:
+        build: .
+        environment:
+            - SIG_ALG_NUM=3
+            - SERVER_PORT=5003
+        networks:
+            docker1:
+    client-rainbow3:
+        build: .
+        environment:
+            - SIG_ALG_NUM=4
+            - SERVER_PORT=5004
+        networks:
+            docker1:
+    client-rainbow5:
+        build: .
+        environment:
+            - SIG_ALG_NUM=5
+            - SERVER_PORT=5005
+        networks:
+            docker1:
+    gpsd:
+        build: ./gpsd/.
+        privileged: true
+        devices:
+           - "/dev/ttyUSB0:/dev/ttyUSB0"
+        networks:
+            docker1:
+                aliases:
+                    - gpsd
+    rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+            - 8080:15672
+        networks:
+            docker1:
+                aliases:
+                    - rabbitmq
+networks:
+    docker1:

@@ -1,0 +1,52 @@
+version: '3'
+services:
+    server-dilithium2:
+        build: .
+        environment:
+            - SIG_ALG_NUM=0
+        networks:
+            docker0:
+        ports:
+            - 5000:5000
+    server-dilithium3:
+        build: .
+        environment:
+            - SIG_ALG_NUM=1
+        networks:
+            docker0:
+        ports:
+            - 5001:5000
+    server-dilithium5:
+        build: .
+        environment:
+            - SIG_ALG_NUM=2
+        networks:
+            docker0:
+        ports:
+            - 5002:5000
+    server-rainbow1:
+        build: .
+        environment:
+            - SIG_ALG_NUM=3
+        networks:
+            docker0:
+        ports:
+            - 5003:5000
+    server-rainbow3:
+        build: .
+        environment:
+            - SIG_ALG_NUM=4
+        networks:
+            docker0:
+        ports:
+            - 5004:5000
+    server-rainbow5:
+        build: .
+        environment:
+            - SIG_ALG_NUM=5
+        networks:
+            docker0:
+        ports:
+            - 5005:5000
+networks:
+    docker0:
