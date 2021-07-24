@@ -2,6 +2,7 @@ version: '3'
 services:
     client-dilithium2:
         build: ./pqc-client/.
+        restart: always
         environment:
             - SIG_ALG_NUM=0
             - SERVER_PORT=5000
@@ -9,46 +10,74 @@ services:
             docker1:
     client-dilithium3:
         build: ./pqc-client/.
+        restart: always
         environment:
             - SIG_ALG_NUM=1
             - SERVER_PORT=5001
         networks:
             docker1:
+        depends_on:
+            - rabbitmq
     client-dilithium5:
         build: ./pqc-client/.
+        restart: always
         environment:
             - SIG_ALG_NUM=2
             - SERVER_PORT=5002
         networks:
             docker1:
+        depends_on:
+            - rabbitmq
     client-rainbow1:
         build: ./pqc-client/.
+        restart: always
         environment:
             - SIG_ALG_NUM=3
             - SERVER_PORT=5003
         networks:
             docker1:
+        depends_on:
+            - rabbitmq
     client-rainbow3:
         build: ./pqc-client/.
+        restart: always
         environment:
             - SIG_ALG_NUM=4
             - SERVER_PORT=5004
         networks:
             docker1:
+        depends_on:
+            - rabbitmq
     client-rainbow5:
         build: ./pqc-client/.
+        restart: always
         environment:
             - SIG_ALG_NUM=5
             - SERVER_PORT=5005
         networks:
             docker1:
+        depends_on:
+            - rabbitmq
     rabbitmq:
         image: rabbitmq:3-management
         ports:
             - 8080:15672
+            - 5672:5672
         networks:
             docker1:
                 aliases:
                     - rabbitmq
+    offload:
+        build: ./offload-client/.
+        restart: always
+        volumes:
+            - /opt/pqc/data:/opt/data
+        networks:
+            docker1:
+        depends_on:
+            - rabbitmq
 networks:
     docker1:
+        ipam:
+            config:
+              - subnet: 172.178.0.0/16

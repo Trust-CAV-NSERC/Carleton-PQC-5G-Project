@@ -5,6 +5,9 @@ import oqs
 import sys
 import os
 import datetime
+import pika
+import time
+import gpsd
 from Crypto.Cipher import AES
 from pprint import pprint
 import uuid
@@ -14,21 +17,24 @@ sigalg = ['Dilithium2', 'Dilithium3', 'Dilithium5','Rainbow-I-Classic', 'Rainbow
 print (len(sigalg))
 # 0 .. 5
 sigalg = sigalg[SIG_ALG_NUM]
-
+gpsd.connect(host="172.178.0.1", port=2947)
+connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
+#connection = pika.BlockingConnection(pika.ConnectionParameters("172.21.30.104"))
+channel = connection.channel()
+channel.queue_declare(queue='testing')
 SERVER_PORT = os.environ["SERVER_PORT"]
 
 
 list_of_servers = [
-    {"server":"172.21.30.104","port":SERVER_PORT,"name":"Local"}#,
+    {"server":"172.21.30.104","port":SERVER_PORT,"name":"Georges Home (VPN)"}
+    #{"server":"172.21.30.10","port":SERVER_PORT,"name":"Georges Home (VPN)"}#,
     #{"server":"10.213.75.36","port":SERVER_PORT,"name":"Toronto Edge"},
     #{"server":"10.213.59.36","port":SERVER_PORT,"name":"Ottawa Edge"},
-    #{"server":"172.21.30.10","port":SERVER_PORT,"name":"Georges Home"}
     #{"server":"209.104.103.66","port":"25115","name":"ott-1-edge-wan"}
-    #{"server":"172.21.30.10","port":"5000","name":"quark"}
     ]
-sigs = oqs.get_enabled_sig_mechanisms()
-print("Enabled signature mechanisms:")
-pprint(sigs, compact="True")
+#sigs = oqs.get_enabled_sig_mechanisms()
+#print("Enabled signature mechanisms:")
+#pprint(sigs, compact="True")
 
 def generateSignerKey(sigalg):
     with oqs.Signature(sigalg) as signer:
@@ -101,35 +107,47 @@ for server in list_of_servers:
     else:
         print ("invalid server")
         sys.exit(1)
-"""
-for server in list_of_servers:
-    results[server["name"]]= {"server":server}
-    print ("running PQC Tests against "+str(server))
-    srv = server["server"]
-    port = server["port"]
-    diff_cipher_ary = []
-    diff_ct_ary = []
-    amount_of_tests = 3
-    for i in range(0,amount_of_tests):
-        diff_cipher = testCipherText(srv,port)
+def testServer():
+    for server in list_of_servers:
+        results={}
+        #print ("running PQC Tests against "+str(server))
+        srv = server["server"]
+        port = server["port"]
+        diff_ct_ary = []
         valid, diff_clear = testClearTextMessage(srv,port)
-    #    valid, diff = testClearTextMessage()
         if valid:
-    #        #print ("Valid!")
             diff_ct_ary.append(diff_clear)
-        diff_cipher_ary.append(diff_cipher)
-    print ("Average clear text delay over "+str(amount_of_tests)+" tests: "+str(round(avg(diff_ct_ary),3))+"ms")
-    print ("Average cipher text delay over "+str(amount_of_tests)+" tests: "+str(round(avg(diff_cipher_ary),3))+"ms")
-    results[server["name"]]= {
-        "delay":[
-            {"clear text":str(round(avg(diff_ct_ary),3))},
-            {"cipher text":str(round(avg(diff_cipher_ary),3))}
-            ],
-        "server":server,
-        "GPS ID":GPS_ID,
-        "timestamp":str(datetime.datetime.utcnow())
-        }
-    
+        packet = gpsd.get_current()
+        if packet.mode >=2:
+            results = {
+                "delay":str(round(avg(diff_ct_ary),3)),
+                "server":server,
+                "timestamp":str(datetime.datetime.utcnow()),
+                "sigalg":sigalg,
+                "gps":
+                    {
+                        "mode":str(packet.mode),
+                        "sat":str(packet.sats),
+                        "lat":str(packet.lat),
+                        "lon":str(packet.lon),
+                        "speed":str(packet.hspeed)
+                    }
+                }
+        else:
+            results = {
+                "delay":str(round(avg(diff_ct_ary),3)),
+                "server":server,
+                "timestamp":str(datetime.datetime.utcnow()),
+                "sigalg":sigalg,
+                "gps":"NOT AVAILABLE"
+                }
+        #print (json.dumps(results))
+        putMessage(results)
     #testAsymTextMessage()
-"""
-print (json.dumps(results))
+def putMessage(msg):
+    channel.basic_publish(exchange='',routing_key='testing',body=str(json.dumps(msg)))
+    return True
+while True:
+    testServer()
+    time.sleep(0.1)
+
