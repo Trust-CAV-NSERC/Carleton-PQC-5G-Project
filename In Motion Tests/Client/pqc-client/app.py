@@ -17,7 +17,7 @@ sigalg = ['Dilithium2', 'Dilithium3', 'Dilithium5','Rainbow-I-Classic', 'Rainbow
 print (len(sigalg))
 # 0 .. 5
 sigalg = sigalg[SIG_ALG_NUM]
-gpsd.connect(host="172.178.0.1", port=2947)
+gpsd.connect(host="172.22.0.4", port=2947)
 connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
 #connection = pika.BlockingConnection(pika.ConnectionParameters("172.21.30.104"))
 channel = connection.channel()
@@ -26,10 +26,10 @@ SERVER_PORT = os.environ["SERVER_PORT"]
 
 
 list_of_servers = [
-    {"server":"172.21.30.104","port":SERVER_PORT,"name":"Georges Home (VPN)"}
-    #{"server":"172.21.30.10","port":SERVER_PORT,"name":"Georges Home (VPN)"}#,
-    #{"server":"10.213.75.36","port":SERVER_PORT,"name":"Toronto Edge"},
-    #{"server":"10.213.59.36","port":SERVER_PORT,"name":"Ottawa Edge"},
+    #{"server":"172.21.30.104","port":SERVER_PORT,"name":"Georges Home (VPN)"}
+    {"server":"172.21.30.10","port":SERVER_PORT,"name":"Georges Home"},
+    {"server":"10.213.75.36","port":SERVER_PORT,"name":"Toronto Edge"},
+    {"server":"10.213.59.36","port":SERVER_PORT,"name":"Ottawa Edge"},
     #{"server":"209.104.103.66","port":"25115","name":"ott-1-edge-wan"}
     ]
 #sigs = oqs.get_enabled_sig_mechanisms()

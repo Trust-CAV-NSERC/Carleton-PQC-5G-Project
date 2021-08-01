@@ -3,7 +3,7 @@ import json
 import uuid
 from geopy import distance
 
-tower_location = (45.271717, -75.474126)
+tower_location = (45.31829321111939, -75.75819861966221)
 
 pickup_location = "/opt/data/"
 drop_off_location = "/opt/dropoff/"
@@ -40,7 +40,7 @@ rainbow3 = []
 rainbow5 = []
 for file in files:
     data_from_file = readFile(pickup_location,file)
-    data_from_file = replaceGPS(data_from_file)
+    #data_from_file = replaceGPS(data_from_file)
     #print (data_from_file)
     delay = data_from_file["delay"]
     server = data_from_file["server"]["name"]

@@ -71,7 +71,7 @@ services:
         build: ./offload-client/.
         restart: always
         volumes:
-            - /opt/pqc/data:/opt/data
+            - /opt/pqc/5G/data:/opt/data
         networks:
             docker1:
         depends_on:
