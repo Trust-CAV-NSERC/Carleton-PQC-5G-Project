@@ -48,8 +48,9 @@ for file in files:
     lat = data_from_file["gps"]["lat"]
     lon = data_from_file["gps"]["lon"]
     speed = data_from_file["gps"]["speed"]
+    time = data_from_file["timestamp"]
     dist = getDistance(tower_location,(float(lat),float(lon)))
-    tmp = ""+str(server)+","+str(signature_algorithm)+","+str(delay)+","+str(lat)+","+str(lon)+","+str(speed)+","+str(dist)
+    tmp = ""+str(server)+","+str(signature_algorithm)+","+str(delay)+","+str(lat)+","+str(lon)+","+str(speed)+","+str(dist)+","+str(time)
     #print (tmp)
     csv_data.append(tmp)
     if signature_algorithm == "Dilithium2":
@@ -68,7 +69,7 @@ for file in files:
 #print (csv_data)
 file_name = str(uuid.uuid4())
 f = open(drop_off_location+file_name+"-overall.csv", "a")
-f.write("Server Name,Signature Algorithm,Delay,Lat,Lon,Speed (kph),Distance (m)\n")
+f.write("Server Name,Signature Algorithm,Delay,Lat,Lon,Speed (kph),Distance (m),Time\n")
 for i in csv_data:
     f.write(i+"\n")
 f.close()
